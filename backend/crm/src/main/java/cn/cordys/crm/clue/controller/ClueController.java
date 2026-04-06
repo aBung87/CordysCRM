@@ -80,7 +80,7 @@ public class ClueController {
         return clueService.list(request, SessionUtils.getUserId(), OrganizationContext.getOrganizationId(), deptDataPermission, false);
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CLUE_MANAGEMENT_READ)
     @Operation(summary = "线索详情")
     public ClueGetResponse get(@PathVariable String id) {

@@ -91,7 +91,7 @@ public class ContractPaymentRecordController {
 		contractPaymentRecordService.delete(id);
 	}
 
-	@GetMapping("/get/{id}")
+	@GetMapping({"/get/{id}", "/{id}"})
 	@RequiresPermissions(PermissionConstants.CONTRACT_PAYMENT_RECORD_READ)
 	@Operation(summary = "回款记录详情")
 	public ContractPaymentRecordGetResponse get(@PathVariable String id) {

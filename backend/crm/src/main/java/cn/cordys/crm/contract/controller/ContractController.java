@@ -106,7 +106,7 @@ public class ContractController {
         return contractService.getSnapshotWithDataPermissionCheck(id, SessionUtils.getUserId(), OrganizationContext.getOrganizationId());
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CONTRACT_READ)
     @Operation(summary = "详情")
     public ContractGetResponse get(@PathVariable("id") String id) {

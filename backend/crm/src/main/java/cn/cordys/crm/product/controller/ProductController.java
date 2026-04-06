@@ -60,7 +60,7 @@ public class ProductController {
         return productService.list(request, OrganizationContext.getOrganizationId());
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.PRODUCT_MANAGEMENT_READ)
     @Operation(summary = "产品详情")
     public ProductGetResponse get(@PathVariable String id) {

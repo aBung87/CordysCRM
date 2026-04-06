@@ -11,23 +11,21 @@ import org.apache.commons.lang3.Strings;
 
 import java.util.Objects;
 
-/**
- * 处理 API 密钥验证的工具类，包括获取用户、验证请求是否包含 API 密钥以及验证签名的功能。
- */
 public class ApiKeyHandler {
 
-    public static final String AUTHORIZATION = "Authorization"; // 授权字段
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String X_ACCESS_KEY = "X-Access-Key";
+    public static final String X_SECRET_KEY = "X-Secret-Key";
 
-    /**
-     * 根据请求中的 API 密钥和签名获取用户 ID。
-     *
-     * @param request HTTP 请求
-     *
-     * @return 用户 ID，如果请求无效则返回 null
-     */
     public static String getUser(HttpServletRequest request) {
         if (request == null) {
             return null;
+        }
+
+        String accessKey = request.getHeader(X_ACCESS_KEY);
+        String secretKey = request.getHeader(X_SECRET_KEY);
+        if (StringUtils.isNotBlank(accessKey) || StringUtils.isNotBlank(secretKey)) {
+            return getUserByHeaderKeys(accessKey, secretKey);
         }
 
         String authorization = request.getHeader(AUTHORIZATION);
@@ -40,7 +38,7 @@ public class ApiKeyHandler {
             return null;
         }
 
-        String accessKey = authParts[0];
+        accessKey = authParts[0];
         String signature = authParts[1];
 
         if (StringUtils.isBlank(accessKey) || StringUtils.isBlank(signature)) {
@@ -50,56 +48,29 @@ public class ApiKeyHandler {
         return getUser(accessKey, signature);
     }
 
-    /**
-     * 判断请求是否包含有效的 API 密钥和签名。
-     *
-     * @param request HTTP 请求
-     *
-     * @return 如果请求包含有效的 API 密钥和签名，返回 true；否则返回 false
-     */
     public static Boolean isApiKeyCall(HttpServletRequest request) {
         if (request == null) {
             return false;
+        }
+        if (StringUtils.isNotBlank(request.getHeader(X_ACCESS_KEY)) || StringUtils.isNotBlank(request.getHeader(X_SECRET_KEY))) {
+            return true;
         }
         String authorization = request.getHeader(AUTHORIZATION);
         return !StringUtils.isBlank(authorization) && authorization.split(":").length >= 2;
     }
 
-    /**
-     * 根据提供的 accessKey 和 signature 验证用户，并返回用户 ID。
-     * 如果验证失败，则抛出相应的异常。
-     *
-     * @param accessKey API 密钥
-     * @param signature API 签名
-     *
-     * @return 用户 ID
-     *
-     * @throws RuntimeException 如果验证失败，会抛出相应的异常
-     */
     public static String getUser(String accessKey, String signature) {
         if (StringUtils.isBlank(accessKey) || StringUtils.isBlank(signature)) {
             return null;
         }
 
-        // 获取用户密钥信息
         UserKey userKey = Objects.requireNonNull(CommonBeanFactory.getBean(UserKeyService.class)).getUserKey(accessKey);
         if (userKey == null) {
             throw new RuntimeException("invalid accessKey");
         }
 
-        // 检查 accessKey 是否启用
-        if (BooleanUtils.isFalse(userKey.getEnable())) {
-            throw new RuntimeException("accessKey is disabled");
-        }
+        validateUserKey(userKey);
 
-        // 检查 accessKey 是否过期
-        if (BooleanUtils.isFalse(userKey.getForever())) {
-            if (userKey.getExpireTime() == null || userKey.getExpireTime() < System.currentTimeMillis()) {
-                throw new RuntimeException("accessKey is expired");
-            }
-        }
-
-        // 解密签名并验证
         String signatureDecrypt;
         try {
             signatureDecrypt = CodingUtils.aesDecrypt(signature, userKey.getSecretKey(), accessKey.getBytes());
@@ -112,7 +83,6 @@ public class ApiKeyHandler {
             throw new RuntimeException("invalid signature");
         }
 
-        // 验证签名中的 accessKey 是否匹配
         if (!Strings.CS.equals(accessKey, signatureArray[0])) {
             throw new RuntimeException("invalid signature");
         }
@@ -124,12 +94,40 @@ public class ApiKeyHandler {
             throw new RuntimeException("invalid signature time", e);
         }
 
-        // 验证签名是否超时（30分钟）
         if (Math.abs(System.currentTimeMillis() - signatureTime) > 1800000) {
             throw new RuntimeException("expired signature");
         }
 
-        // 返回用户创建者 ID
         return userKey.getCreateUser();
+    }
+
+    private static String getUserByHeaderKeys(String accessKey, String secretKey) {
+        if (StringUtils.isBlank(accessKey) || StringUtils.isBlank(secretKey)) {
+            return null;
+        }
+
+        UserKey userKey = Objects.requireNonNull(CommonBeanFactory.getBean(UserKeyService.class)).getUserKey(accessKey);
+        if (userKey == null) {
+            throw new RuntimeException("invalid accessKey");
+        }
+
+        validateUserKey(userKey);
+
+        if (!Strings.CS.equals(secretKey, userKey.getSecretKey())) {
+            throw new RuntimeException("invalid secretKey");
+        }
+
+        return userKey.getCreateUser();
+    }
+
+    private static void validateUserKey(UserKey userKey) {
+        if (BooleanUtils.isFalse(userKey.getEnable())) {
+            throw new RuntimeException("accessKey is disabled");
+        }
+
+        if (BooleanUtils.isFalse(userKey.getForever())
+                && (userKey.getExpireTime() == null || userKey.getExpireTime() < System.currentTimeMillis())) {
+            throw new RuntimeException("accessKey is expired");
+        }
     }
 }

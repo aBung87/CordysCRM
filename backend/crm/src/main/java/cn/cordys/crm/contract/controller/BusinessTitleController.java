@@ -87,7 +87,7 @@ public class BusinessTitleController {
     }
 
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CONTRACT_BUSINESS_TITLE_READ)
     @Operation(summary = "详情")
     public BusinessTitleListResponse get(@PathVariable("id") String id) {

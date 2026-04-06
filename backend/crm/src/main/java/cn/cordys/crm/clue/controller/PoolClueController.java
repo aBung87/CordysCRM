@@ -81,7 +81,7 @@ public class PoolClueController {
         poolClueService.delete(id);
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CLUE_MANAGEMENT_POOL_READ)
     @Operation(summary = "线索详情")
     public ClueGetResponse get(@PathVariable String id) {

@@ -100,7 +100,7 @@ public class CustomerController {
         return customerService.list(request, SessionUtils.getUserId(), OrganizationContext.getOrganizationId(), deptDataPermission);
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CUSTOMER_MANAGEMENT_READ)
     @Operation(summary = "客户详情")
     public CustomerGetResponse get(@PathVariable String id) {

@@ -67,7 +67,7 @@ public class ContractInvoiceController {
         return contractInvoiceService.getSnapshotWithDataPermissionCheck(id, SessionUtils.getUserId(), OrganizationContext.getOrganizationId());
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CONTRACT_INVOICE_READ)
     @Operation(summary = "详情")
     public ContractInvoiceGetResponse get(@PathVariable("id") String id) {

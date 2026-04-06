@@ -69,7 +69,7 @@ public class ContractPaymentPlanController {
         return contractPaymentPlanService.list(request, SessionUtils.getUserId(), OrganizationContext.getOrganizationId(), deptDataPermission);
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CONTRACT_PAYMENT_PLAN_READ)
     @Operation(summary = "合同回款计划详情")
     public ContractPaymentPlanGetResponse get(@PathVariable String id){

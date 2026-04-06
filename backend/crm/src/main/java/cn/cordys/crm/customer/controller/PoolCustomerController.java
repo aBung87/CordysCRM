@@ -77,7 +77,7 @@ public class PoolCustomerController {
         poolCustomerService.delete(id);
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.CUSTOMER_MANAGEMENT_POOL_READ)
     @Operation(summary = "客户详情")
     public CustomerGetResponse get(@PathVariable String id) {

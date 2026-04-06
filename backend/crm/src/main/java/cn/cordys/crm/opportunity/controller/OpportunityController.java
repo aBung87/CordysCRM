@@ -121,7 +121,7 @@ public class OpportunityController {
         opportunityService.batchDelete(ids, SessionUtils.getUserId(), OrganizationContext.getOrganizationId());
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.OPPORTUNITY_MANAGEMENT_READ)
     @Operation(summary = "商机详情")
     public OpportunityDetailResponse get(@PathVariable String id) {

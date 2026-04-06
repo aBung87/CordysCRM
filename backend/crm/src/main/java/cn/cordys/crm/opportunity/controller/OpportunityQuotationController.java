@@ -86,7 +86,7 @@ public class OpportunityQuotationController {
     }
 
     //查询详情
-    @GetMapping("/get/{id}")
+    @GetMapping({"/get/{id}", "/{id}"})
     @RequiresPermissions(PermissionConstants.OPPORTUNITY_QUOTATION_READ)
     @Operation(summary = "获取报价单详情")
     public OpportunityQuotationGetResponse get(@PathVariable("id") String id) {
