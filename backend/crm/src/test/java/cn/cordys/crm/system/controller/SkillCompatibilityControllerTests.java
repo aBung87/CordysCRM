@@ -1,5 +1,6 @@
 package cn.cordys.crm.system.controller;
 
+import cn.cordys.common.util.CommonBeanFactory;
 import cn.cordys.common.constants.FormKey;
 import cn.cordys.common.constants.PermissionConstants;
 import cn.cordys.common.dto.DeptDataPermissionDTO;
@@ -21,8 +22,6 @@ import cn.cordys.crm.system.service.ModuleFormCacheService;
 import cn.cordys.crm.system.service.UserViewService;
 import cn.cordys.security.SessionConstants;
 import cn.cordys.security.SessionUser;
-import jakarta.servlet.ServletException;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
@@ -32,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,6 +75,8 @@ class SkillCompatibilityControllerTests {
     private Subject subject;
     @Mock
     private Session session;
+    @Mock
+    private ApplicationContext applicationContext;
 
     private MockMvc skillMockMvc;
     private MockMvc clueMockMvc;
@@ -101,6 +103,9 @@ class SkillCompatibilityControllerTests {
         when(session.getAttribute(SessionConstants.ATTR_USER)).thenReturn(sessionUser);
         lenient().doNothing().when(subject).checkPermission(any(String.class));
         ThreadContext.bind(subject);
+        lenient().when(applicationContext.getBean(ModuleFormCacheService.class)).thenReturn(moduleFormCacheService);
+        lenient().when(applicationContext.getBean(UserViewService.class)).thenReturn(userViewService);
+        ReflectionTestUtils.setField(CommonBeanFactory.class, "context", applicationContext);
 
         OrganizationContext.setOrganizationId(ORGANIZATION_ID);
     }
@@ -109,6 +114,7 @@ class SkillCompatibilityControllerTests {
     void tearDown() {
         ThreadContext.unbindSubject();
         OrganizationContext.clear();
+        ReflectionTestUtils.setField(CommonBeanFactory.class, "context", null);
     }
 
     @Test

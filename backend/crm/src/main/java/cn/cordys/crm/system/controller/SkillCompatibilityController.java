@@ -65,7 +65,7 @@ public class SkillCompatibilityController {
     @Operation(summary = "Skill compatibility: contact page list")
     public PagerWithOption<List<CustomerContactListResponse>> contactPage(@Validated @RequestBody CustomerContactPageRequest request) {
         SecurityUtils.getSubject().checkPermission(PermissionConstants.CUSTOMER_MANAGEMENT_CONTACT_READ);
-        ConditionFilterUtils.parseCondition(request);
+        ConditionFilterUtils.parseCondition(request, FormKey.CONTACT.getKey());
         DeptDataPermissionDTO deptDataPermission = dataScopeService.getDeptDataPermission(
                 SessionUtils.getUserId(),
                 OrganizationContext.getOrganizationId(),
