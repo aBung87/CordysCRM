@@ -47,6 +47,21 @@ Added a dedicated compatibility controller with the following routes:
 
 Added `/{id}` aliases alongside existing `/get/{id}` routes for skill-friendly access on multiple CRM modules.
 
+### 4. NAS hotfix deployment automation
+
+Added a repeatable deployment workflow for NAS / 1Panel environments:
+
+- `scripts/nas/deploy_skill_hotfix.py`
+- `scripts/nas/README.md`
+
+This workflow:
+
+- builds the compatibility `crm-main.jar`
+- uploads it to the NAS hotfix directory
+- patches `docker-compose.yml` idempotently
+- restarts the CRM container
+- verifies the hotfix jar and compatibility endpoint
+
 ## Validation
 
 ### Automated tests
