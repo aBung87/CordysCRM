@@ -22,6 +22,26 @@ import java.util.List;
 @Data
 public class FilterCondition {
 
+    public Boolean getRefFiled() {
+        return false;
+    }
+
+    public Boolean getCustomField() {
+        return false;
+    }
+
+    public Boolean getRefMainCustomField() {
+        return false;
+    }
+
+    public String getRefMainFieldName() {
+        return null;
+    }
+
+    public String getRefMainTableName() {
+        return null;
+    }
+
     /**
      * 系统字段为字段名
      * 模块字段为字段ID
