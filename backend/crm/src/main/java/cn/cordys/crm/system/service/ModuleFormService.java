@@ -890,6 +890,9 @@ public class ModuleFormService {
 				reloadFieldMap.putAll(priceSubFieldMap);
 
 				// 平铺引用字段
+                if (CollectionUtils.isEmpty(sourceField.getRefFields())) {
+                    return;
+                }
                 sourceField.getRefFields().forEach(oldRefField -> {
 					// 兼容旧引用字段
 					String oldRefFieldId = splitRefId(oldRefField.getResourceFieldId()).apply(oldRefField.getId());
