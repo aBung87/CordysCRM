@@ -225,10 +225,13 @@ public class ContractInvoiceService {
         if (moduleFormConfigDTO == null) {
             throw new GenericException(Translator.get("invoice.form.config.required"));
         }
+        if (originContractInvoice == null) {
+            throw new GenericException(Translator.get("invoice.not.exist"));
+        }
 
         String contractId = request.getContractId() == null ? originContractInvoice.getContractId() : request.getContractId();
         Contract contract = contractMapper.selectByPrimaryKey(contractId);
-        BigDecimal contractInvoiceValidAmount = extContractInvoiceMapper.calculateContractInvoiceValidAmount(request.getContractId(), userId, orgId, request.getId());
+        BigDecimal contractInvoiceValidAmount = extContractInvoiceMapper.calculateContractInvoiceValidAmount(contractId, userId, orgId, request.getId());
         if (request.getAmount() != null && contract != null && request.getAmount().compareTo(contract.getAmount().subtract(contractInvoiceValidAmount)) > 0) {
             // 校验发票金额
             throw new GenericException(Translator.get("invoice.amount.exceed"));
@@ -404,6 +407,9 @@ public class ContractInvoiceService {
      */
     public ContractInvoiceGetResponse get(String id) {
         ContractInvoice contractInvoice = contractInvoiceMapper.selectByPrimaryKey(id);
+        if (contractInvoice == null) {
+            return null;
+        }
         // 获取模块字段
         ModuleFormConfigDTO contractInvoiceFormConfig = getFormConfig(contractInvoice.getOrganizationId());
         List<BaseModuleFieldValue> contractInvoiceFields = invoiceFieldService.getModuleFieldValuesByResourceId(id);
@@ -606,6 +612,9 @@ public class ContractInvoiceService {
         LambdaQueryWrapper<ContractInvoiceSnapshot> delWrapper = new LambdaQueryWrapper<>();
         delWrapper.eq(ContractInvoiceSnapshot::getInvoiceId, id);
         List<ContractInvoiceSnapshot> invoiceSnapshots = snapshotBaseMapper.selectListByLambda(delWrapper);
+        if (CollectionUtils.isEmpty(invoiceSnapshots)) {
+            return;
+        }
         ContractInvoiceSnapshot first = invoiceSnapshots.getFirst();
         if (first != null) {
             ContractInvoiceGetResponse response = JSON.parseObject(first.getInvoiceValue(), ContractInvoiceGetResponse.class);
