@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import posixpath
 import re
@@ -80,6 +81,14 @@ def ensure_local_jar(path: Path) -> Path:
     if not path.exists():
         raise SystemExit(f"未找到本地热修补产物: {path}")
     return path
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 class RemoteSession:
@@ -190,6 +199,18 @@ def verify_remote_jar(session: RemoteSession, container_name: str) -> None:
         raise SystemExit("容器内未发现 SkillCompatibilityController，热修补 jar 可能未生效。")
 
 
+def get_remote_container_jar_sha256(session: RemoteSession, container_name: str) -> str:
+    command = (
+        f"docker exec {shlex.quote(container_name)} sh -lc "
+        "\"sha256sum /app/lib/crm-main.jar | awk '{print $1}'\""
+    )
+    _, out, _ = session.run(command, sudo=True)
+    checksum = out.strip().splitlines()[-1].strip().split()[0] if out.strip() else ""
+    if not checksum:
+        raise SystemExit("无法获取容器内 crm-main.jar 的 SHA256")
+    return checksum
+
+
 def verify_http(base_url: str, access_key: str | None, secret_key: str | None) -> None:
     get_key_url = base_url.rstrip("/") + DEFAULT_VERIFY_PATH
     try:
@@ -228,6 +249,8 @@ def main() -> int:
 
     ensure_local_jar(local_jar)
     log("LOCAL", f"使用热修补产物: {local_jar}")
+    local_sha256 = sha256_file(local_jar)
+    log("LOCAL", f"本地 jar SHA256: {local_sha256}")
 
     verify_url = args.verify_url or f"http://{args.host}:8081"
     session = RemoteSession(args.host, args.port, args.user, password, args.ssh_timeout)
@@ -251,9 +274,9 @@ def main() -> int:
         else:
             log("COMPOSE", "compose 中已存在热修补挂载，无需再次修改。")
 
-        log("DEPLOY", "执行 docker compose up -d")
+        log("DEPLOY", f"强制重建服务: {args.service_name}")
         session.run(
-            f"cd {shlex.quote(args.compose_dir)} && docker compose --ansi never up -d",
+            f"cd {shlex.quote(args.compose_dir)} && docker compose --ansi never up -d --force-recreate --no-deps {shlex.quote(args.service_name)}",
             sudo=True,
         )
 
@@ -264,6 +287,10 @@ def main() -> int:
             sudo=True,
         )
         verify_remote_jar(session, args.container_name)
+        remote_sha256 = get_remote_container_jar_sha256(session, args.container_name)
+        log("VERIFY", f"容器 jar SHA256: {remote_sha256}")
+        if remote_sha256.lower() != local_sha256.lower():
+            raise SystemExit("容器内 crm-main.jar 的 SHA256 与本地热修补不一致，部署未生效。")
 
         if not args.skip_http_verify:
             verify_http(verify_url, args.access_key, args.secret_key)
